@@ -1,48 +1,72 @@
 """
-Database Schemas
+Database Schemas for Aham Eva
 
-Define your MongoDB collection schemas here using Pydantic models.
-These schemas are used for data validation in your application.
-
-Each Pydantic model represents a collection in your database.
-Model name is converted to lowercase for the collection name:
-- User -> "user" collection
-- Product -> "product" collection
-- BlogPost -> "blogs" collection
+Each Pydantic model corresponds to a MongoDB collection with the same lowercased
+name. These schemas define the data contract for the application.
 """
+from pydantic import BaseModel, Field, HttpUrl, EmailStr
+from typing import Optional, List
+from datetime import date
 
-from pydantic import BaseModel, Field
-from typing import Optional
 
-# Example schemas (replace with your own):
+class ProgramModule(BaseModel):
+    day: int = Field(..., ge=1, description="Day number in the program")
+    title: str
+    summary: Optional[str] = None
+    focus: Optional[str] = Field(None, description="Theme or practice focus")
 
-class User(BaseModel):
-    """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
-    """
-    name: str = Field(..., description="Full name")
-    email: str = Field(..., description="Email address")
-    address: str = Field(..., description="Address")
-    age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
-    is_active: bool = Field(True, description="Whether user is active")
+
+class Program(BaseModel):
+    title: str
+    slug: str = Field(..., description="URL-friendly identifier")
+    tagline: Optional[str] = None
+    description: Optional[str] = None
+    duration_days: int = Field(..., ge=1)
+    price_usd: float = Field(..., ge=0)
+    cover_image: Optional[HttpUrl] = None
+    modules: List[ProgramModule] = []
+    featured: bool = False
+
+
+class TherapyOffering(BaseModel):
+    title: str
+    slug: str
+    description: Optional[str] = None
+    format: str = Field(..., description="e.g., 1:1, group")
+    duration_minutes: int = Field(..., ge=15)
+    price_usd: float = Field(..., ge=0)
+
 
 class Product(BaseModel):
-    """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
-    """
-    title: str = Field(..., description="Product title")
-    description: Optional[str] = Field(None, description="Product description")
-    price: float = Field(..., ge=0, description="Price in dollars")
-    category: str = Field(..., description="Product category")
-    in_stock: bool = Field(True, description="Whether product is in stock")
+    title: str
+    slug: str
+    description: Optional[str] = None
+    price_usd: float = Field(..., ge=0)
+    kind: str = Field(..., description="digital_audio | pdf | bundle")
+    download_url: Optional[HttpUrl] = None
+    cover_image: Optional[HttpUrl] = None
 
-# Add your own schemas here:
-# --------------------------------------------------
 
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+class JournalPost(BaseModel):
+    title: str
+    slug: str
+    excerpt: Optional[str] = None
+    content_md: str
+    cover_image: Optional[HttpUrl] = None
+    published_on: Optional[date] = None
+
+
+class Booking(BaseModel):
+    full_name: str
+    email: EmailStr
+    therapy_slug: str
+    preferred_date: str
+    note: Optional[str] = None
+    timezone: Optional[str] = None
+
+
+class ContactMessage(BaseModel):
+    full_name: str
+    email: EmailStr
+    subject: Optional[str] = None
+    message: str
